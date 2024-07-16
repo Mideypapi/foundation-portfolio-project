@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load custom_tags %}
+{% block title %}
+    {{ post.title }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="p-6 bg-white border-b border-gray-200">
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-bold text-gray-900">{{ post.title }}</h1>
+                    <div class="flex space-x-2">
+                        <a href="{% url 'home' %}" class="text-gray-600 hover:text-gray-900">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 class="h-6 w-6"
+                                 fill="none"
+                                 viewBox="0 0 24 24"
+                                 stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                        </a>
+                        {% if user.is_authenticated and post.author.pk == user.pk %}
+                            <a href="{% url 'edit' post.pk %}"
+                               class="text-blue-600 hover:text-blue-800">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     class="h-6 w-6"
+                                     fill="none"
+                                     viewBox="0 0 24 24"
+                                     stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </a>
+                            <a href="{% url 'delete' post.pk %}"
+                               class="text-red-600 hover:text-red-800"
+                               onclick="return confirm('Are you sure you want to delete this post?');">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     class="h-6 w-6"
+                                     fill="none"
+                                     viewBox="0 0 24 24"
+                                     stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class=" mb-4">
+                    <p class="text-sm text-gray-600">By {{ post.author }}</p>
+                    <p class="text-sm text-gray-600">
+                        Reading time
+                        {{ post.content|reading_time }} minute
+                    </p>
+                </div>
+                <div class="mb-6">
+                    <p class="text-gray-700">{{ post.content }}</p>
+                </div>
+                <div class="flex items-center space-x-4 mb-6">
+                    <button id="like-button"
+                            onclick="like()"
+                            class="flex items-center space-x-1 {% if user_has_liked %}text-red-600{% else %}text-gray-600{% endif %} hover:text-red-600">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             class="h-6 w-6"
+                             fill="{% if user_has_liked %}currentColor{% else %}none{% endif %}"
+                             viewBox="0 0 24 24"
+                             stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        <span id="like-count">{{ post.likes.count }}</span>
+                    </button>
+                    <button id="scrap-button"
+                            onclick="scrap()"
+                            class="flex items-center space-x-1 {% if user_has_scraped %}text-green-600{% else %}text-gray-600{% endif %} hover:text-green-600">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             class="h-6 w-6"
+                             fill="{% if user_has_scraped %}currentColor{% else %}none{% endif %}"
+                             viewBox="0 0 24 24"
+                             stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                        </svg>
+                        <span id="scrap-count">{{ post.scraps.count }}</span>
+                    </button>
+                </div>
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Comments</h2>
+                    <ul class="space-y-4">
+                        {% for comment in post.comments.all %}
+                            <li class="bg-gray-50 p-3 rounded">
+                                <p class="text-sm text-gray-900 mb-2">{{ comment.author }}</p>
+                                <p class="text-sm text-gray-700">{{ comment.content }}</p>
+                                {% if user.is_authenticated and comment.author.pk == user.pk %}
+                                    <a href="{% url 'delete_comment' post.pk comment.pk %}"
+                                       class="text-xs text-red-600 hover:text-red-800 mt-1 inline-block">Delete comment</a>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% if user.is_authenticated %}
+                    <form method="POST" class="mb-6">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label for="comment" class="block text-gray-700 text-sm font-bold mb-2">Add a comment</label>
+                            <textarea name="content"
+                                      id="comment"
+                                      rows="3"
+                                      class="border-2 border-gray-300 rounded-md w-full p-2"
+                                      placeholder="Enter your comment"></textarea>
+                        </div>
+                        <div>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                Submit Comment
+                            </button>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+    const likeBtn = document.getElementById("like-button");
+    const scrapBtn = document.getElementById("scrap-button");
+    let userHasLiked = {{ user_has_liked|yesno:"true,false" }};
+    let userHasScraped = {{ user_has_scraped|yesno:"true,false" }};
+    
+    const like = () => {
+      axios('/like', {
+        method: "POST",
+        data: {post_pk: "{{post.pk}}"}
+      })
+      .then(res => {
+        document.getElementById("like-count").innerHTML = res.data.like_count;
+        userHasLiked = res.data.existing_like;
+        updateLikeButton();
+      })
+    }
+    
+    const scrap = () => {
+      axios('/scrap', {
+        method: "POST",
+        data: {post_pk: "{{post.pk}}"}
+      })
+      .then(res => {
+        document.getElementById("scrap-count").innerHTML = res.data.scrap_count;
+        userHasScraped = res.data.existing_scrap;
+        updateScrapButton();
+      })
+    }
+
+    const updateLikeButton = () => {
+      if (userHasLiked) {
+        likeBtn.classList.add("text-red-600");
+        likeBtn.classList.remove("text-gray-600");
+        likeBtn.querySelector('svg').setAttribute('fill', 'currentColor');
+      } else {
+        likeBtn.classList.remove("text-red-600");
+        likeBtn.classList.add("text-gray-600");
+        likeBtn.querySelector('svg').setAttribute('fill', 'none');
+      }
+    }
+
+    const updateScrapButton = () => {
+      if (userHasScraped) {
+        scrapBtn.classList.add("text-green-600");
+        scrapBtn.classList.remove("text-gray-600");
+        scrapBtn.querySelector('svg').setAttribute('fill', 'currentColor');
+      } else {
+        scrapBtn.classList.remove("text-green-600");
+        scrapBtn.classList.add("text-gray-600");
+        scrapBtn.querySelector('svg').setAttribute('fill', 'none');
+      }
+    }
+    </script>
+{% endblock content %}
